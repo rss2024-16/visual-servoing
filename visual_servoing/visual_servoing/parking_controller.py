@@ -4,6 +4,8 @@ import rclpy
 from rclpy.node import Node
 import numpy as np
 
+import time
+
 from vs_msgs.msg import ConeLocation, ParkingError
 from ackermann_msgs.msg import AckermannDriveStamped
 
@@ -34,12 +36,7 @@ class ParkingController(Node):
         self.relative_y = 0
         self.dist = 0
 
-        try: #initialize a variable but do not update it in spin
-            if not self.distance_check:
-                #do not change variable value if it has been initialized already
-                self.distance_check = False
-        except AttributeError:
-            self.distance_check = False
+        self.distance_check = False
 
         self.get_logger().info("Parking Controller Initialized")
 
