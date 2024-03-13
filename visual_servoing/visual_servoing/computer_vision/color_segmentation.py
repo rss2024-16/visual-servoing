@@ -16,29 +16,6 @@ from sensor_msgs.msg import Image
 #  v
 ###############################################################
 
-# class ColorSegmentation(Node):
-
-#     def __init__(self):
-#         super().__init__("color_segmentation")
-
-# 		# a publisher for our mask
-#         self.line_pub = self.create_publisher(Image, "mask", 1)
-
-# 		    # a subscriber to get the laserscan data
-#         self.create_subscription(Image, "mask", self.listener_callback, 10)
-
-#     def timer_callback(self, image):
-#
-# def main():
-
-#     rclpy.init()
-#     color_segmentation = ColorSegmentation()
-#     rclpy.spin(color_segmentation)
-#     color_segmentation.destroy_node()
-#     rclpy.shutdown()
-
-
-
 
 def image_print(img):
 	"""
@@ -63,7 +40,8 @@ def cd_color_segmentation(img, template):
 
 	# setting thresholds manually
 
-	ORANGE_THRESHOLD = ([0, 0, 153], [45, 100, 100])
+	ORANGE_THRESHOLD = ([10, 150, 152], [50, 255, 255])
+
 
 	# convert bgr to hsv
 	hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
@@ -85,11 +63,11 @@ def cd_color_segmentation(img, template):
 	# upper_bound = average_hue_value + 10
 
 	mask = cv2.inRange(hsv, lower_bound, upper_bound)
-	print(f"Mask: {mask}")
+	# print(f"Mask: {mask}")
 
 	# find contours from masks
 	contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-	print(f"Contours: {contours}")
+	# print(f"Contours: {contours}")
 
 	 # If we have contours
 	if len(contours) != 0:
@@ -105,8 +83,6 @@ def cd_color_segmentation(img, template):
 
 	########### YOUR CODE ENDS HERE ###########
 
-	image_print(img)
-
-	print(f"Bounding Box: {bounding_box}")
+	# print(f"Bounding Box: {bounding_box}")
 	# Return bounding box
 	return bounding_box
