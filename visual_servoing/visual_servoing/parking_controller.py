@@ -21,7 +21,7 @@ class ParkingController(Node):
         self.declare_parameter("drive_topic")
         DRIVE_TOPIC = self.get_parameter("drive_topic").value # set in launch file; different for simulator vs racecar
 
-        self.parking_distance = 0.75 # meters; try playing with this number!
+        self.parking_distance = 1.5 # meters; try playing with this number!
 
         self.drive_pub = self.create_publisher(AckermannDriveStamped, DRIVE_TOPIC, 10)
         self.error_pub = self.create_publisher(ParkingError, "/parking_error", 10)
@@ -81,11 +81,15 @@ class ParkingController(Node):
 
         self.dist = ( self.relative_x**2 + self.relative_y**2 ) ** (1/2)
         look_ahead = self.dist/2
+        if look_ahead < 1.0:
+            look_ahead = self.dist
+
         angle = np.arctan2(self.relative_y,self.relative_x)
 
-        eps = 0.15
+        dist_eps = 0.1
+        angle_eps = 0.05
 
-        if abs(self.dist - self.parking_distance) < eps and abs(angle-angle_des) < eps:
+        if abs(self.dist - self.parking_distance) < dist_eps and abs(angle-angle_des) < angle_eps:
             #goal check
             speed = 0.0
             turning_angle = 0.0
@@ -125,6 +129,8 @@ class ParkingController(Node):
 
                 if self.relative_x < 0:
                     #if the cone is behind us, go backward instead of forward
+                    #we also don't want to use pure pursuit as we will just drive
+                    #backward into cone, so just back up and correct angle
                     speed = -speed
                     turning_angle = -math.atan2(self.relative_y,self.relative_x)
 
