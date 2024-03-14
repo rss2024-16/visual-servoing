@@ -4,10 +4,10 @@ import rclpy
 from rclpy.node import Node
 import numpy as np
 
-import time
-
 from vs_msgs.msg import ConeLocation, ParkingError
 from ackermann_msgs.msg import AckermannDriveStamped
+
+import math
 
 class ParkingController(Node):
     """
@@ -31,10 +31,13 @@ class ParkingController(Node):
         
         self.MAX_TURN = .34
 
-        self.get_logger().info(str(self.parking_distance))
         self.relative_x = 0
         self.relative_y = 0
         self.dist = 0
+
+        self.BASE_LENGTH = 0.3
+
+        self.previous_angles = []
 
         self.distance_check = False
 
@@ -42,6 +45,29 @@ class ParkingController(Node):
 
     def error(self,actual,desired):
         return (desired - actual)/actual
+    
+    def circle_intersection(self, line_slope, line_intercept, circle_radius):
+        # Coefficients of the quadratic equation
+        a = line_slope**2 + 1
+        b = 2 * line_slope * line_intercept
+        c = line_intercept**2 - circle_radius**2
+
+        # Solve the quadratic equation for x
+        x_solutions = np.roots([a, b, c])
+
+        # Find corresponding y values using the line equation
+        intersection_points = [(float(x_val), float(line_slope * x_val + line_intercept)) for x_val in x_solutions]
+        
+        # +X forward, +Y left, -Y right
+
+        if intersection_points[0][0] > 0 and intersection_points[1][0] < 0:
+            return intersection_points[0]
+        elif intersection_points[0][0] < 0 and intersection_points[1][0] > 0:
+            return intersection_points[1]
+        elif intersection_points[0][1] > 0 and self.SIDE == -1 or intersection_points[0][1] < 0 and self.SIDE == 1:
+            return intersection_points[0]
+        else:
+            return intersection_points[1]
 
 
     def relative_cone_callback(self, msg):
@@ -49,25 +75,26 @@ class ParkingController(Node):
         self.relative_y = msg.y_pos
         drive_cmd = AckermannDriveStamped()
 
-        ka = 1
         angle_des = 0
 
-        kp = 1/3
+        kp = 1/3 #Kp value for speed
 
         self.dist = ( self.relative_x**2 + self.relative_y**2 ) ** (1/2)
+        look_ahead = self.dist/2
         angle = np.arctan2(self.relative_y,self.relative_x)
 
-        eps = 0.1
+        eps = 0.15
 
         if abs(self.dist - self.parking_distance) < eps and abs(angle-angle_des) < eps:
             #goal check
             speed = 0.0
             turning_angle = 0.0
         else:
-            P = self.parking_distance - self.dist
-            Pangle = -ka * (angle_des - angle)
+            slope = self.relative_y/self.relative_x
+            intersect = self.circle_intersection(slope, 0, look_ahead)
+            turning_angle = math.atan2(2 * self.BASE_LENGTH * intersect[1], look_ahead**2)
 
-            if P>0 or self.distance_check:
+            if self.parking_distance>self.dist or self.distance_check:
                 #if P>0, we are too close to the cone and may need to back up
                 #if self.distance_check is true, we are already backing up and need to check distance
                 
@@ -76,7 +103,7 @@ class ParkingController(Node):
                     if self.dist < 1.5*self.parking_distance:
                         #if we have not backed up far enough, continue
                         speed = float(-1)
-                        turning_angle = -Pangle
+                        turning_angle = -turning_angle
 
                     else:
                         #if we have backed up far enough, set distance check to false
@@ -94,23 +121,20 @@ class ParkingController(Node):
 
 
             else:
-                turning_angle = Pangle
-                speed = -kp * P
+                speed = kp*abs(self.dist-self.parking_distance)
 
-                if P < 0 and self.relative_x < 0:
+                if self.relative_x < 0:
                     #if the cone is behind us, go backward instead of forward
                     speed = -speed
-                    turning_angle = -turning_angle
+                    turning_angle = -math.atan2(self.relative_y,self.relative_x)
 
-                if abs(speed) < 1:
+                if abs(speed) < 0.5:
                     #this statement may need tuning on actual robot depending on the
                     #motor issues that we faced
                     speed = float(1) if speed > 0 else float(-1)
                     
         if abs(turning_angle) > self.MAX_TURN:
             turning_angle = self.MAX_TURN if turning_angle > 0 else -self.MAX_TURN
-
-
 
         drive_cmd.drive.speed = speed
         drive_cmd.drive.steering_angle = turning_angle
