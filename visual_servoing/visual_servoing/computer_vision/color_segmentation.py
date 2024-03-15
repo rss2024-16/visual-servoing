@@ -79,10 +79,9 @@ def cd_color_segmentation(img, template):
 		x, y, w, h = cv2.boundingRect(c)
 
 		cv2.rectangle(img,(x,y),(x+w,y+h),(0,0,255),2)
+		cv2.circle(img, (int(x+w/2), y+h), radius=0, color=(0, 0, 255), thickness=-1)
 		bounding_box = ((x,y),(x+w,y+h))
+		bottom_left = (x,y+h)
 
-	########### YOUR CODE ENDS HERE ###########
-
-	# print(f"Bounding Box: {bounding_box}")
-	# Return bounding box
-	return bounding_box
+		return bounding_box[0],bounding_box[1],bottom_left
+	return None,None,None

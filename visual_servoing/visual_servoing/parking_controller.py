@@ -21,7 +21,7 @@ class ParkingController(Node):
         self.declare_parameter("drive_topic")
         DRIVE_TOPIC = self.get_parameter("drive_topic").value # set in launch file; different for simulator vs racecar
 
-        self.parking_distance = 1.5 # meters; try playing with this number!
+        self.parking_distance = .5 # meters; try playing with this number!
 
         self.drive_pub = self.create_publisher(AckermannDriveStamped, DRIVE_TOPIC, 10)
         self.error_pub = self.create_publisher(ParkingError, "/parking_error", 10)
@@ -73,6 +73,9 @@ class ParkingController(Node):
     def relative_cone_callback(self, msg):
         self.relative_x = msg.x_pos
         self.relative_y = msg.y_pos
+
+        pubstr = f"Relative x: {self.relative_x}\nRelative y: {self.relative_y}\n---------------"
+        self.get_logger().info(pubstr)
         drive_cmd = AckermannDriveStamped()
 
         angle_des = 0
@@ -134,13 +137,16 @@ class ParkingController(Node):
                     speed = -speed
                     turning_angle = -math.atan2(self.relative_y,self.relative_x)
 
-                if abs(speed) < 0.5:
+                if abs(speed) < 1.5:
                     #this statement may need tuning on actual robot depending on the
                     #motor issues that we faced
-                    speed = float(1) if speed > 0 else float(-1)
+                    speed = float(1.5) if speed > 0 else float(-1.5)
                     
         if abs(turning_angle) > self.MAX_TURN:
             turning_angle = self.MAX_TURN if turning_angle > 0 else -self.MAX_TURN
+
+        
+        self.get_logger().info(str(turning_angle))
 
         drive_cmd.drive.speed = speed
         drive_cmd.drive.steering_angle = turning_angle
