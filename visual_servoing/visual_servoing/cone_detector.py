@@ -43,18 +43,14 @@ class ConeDetector(Node):
 
         #################################
         # YOUR CODE HERE
-        # detect the cone and publish its
-        # pixel location in the image.
-        # self.get_logger().info(str(type(image_msg)))
         image = self.bridge.imgmsg_to_cv2(image_msg, "bgr8")
 
-        upper_left, bottom_right, bottom_left = cd_color_segmentation(image,None)
+        x, y, w, h = cd_color_segmentation(image, None)
 
-        if upper_left is not None:
-            x, y = bottom_right
+        if x is not None:
             center_pixel = ConeLocationPixel()
-            center_pixel.u = float((bottom_left[0]+bottom_right[0])/2)
-            center_pixel.v = float(y)
+            center_pixel.u = float(x + w/2)
+            center_pixel.v = float(y + h)
 
             self.cone_pub.publish(center_pixel)
 

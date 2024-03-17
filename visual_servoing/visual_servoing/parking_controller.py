@@ -71,6 +71,9 @@ class ParkingController(Node):
 
 
     def relative_cone_callback(self, msg):
+        """
+        Given the cone location msg, in terms of real life coordinates x, y, publish a drive command
+        """
         self.relative_x = msg.x_pos
         self.relative_y = msg.y_pos
 
