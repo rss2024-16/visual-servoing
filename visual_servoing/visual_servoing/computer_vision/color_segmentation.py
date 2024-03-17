@@ -41,7 +41,18 @@ def cd_color_segmentation(img, template):
 	# setting thresholds manually
 
 	ORANGE_THRESHOLD = ([10, 150, 152], [50, 255, 255])
+	print(img.shape)
 
+	total_rows = img.shape[0]
+
+	# Calculate the start and end indices for the middle third of the rows
+	start_idx = total_rows // 3
+	end_idx = start_idx * 2
+
+	# Crop the image to the middle third of the rows
+	# The slicing includes all columns and all channels, hence the ':' in the second and third dimensions
+	cropped_img = img[240:360, :, :]
+	print(cropped_img.shape)
 
 	# convert bgr to hsv
 	hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
