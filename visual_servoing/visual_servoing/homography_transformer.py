@@ -131,6 +131,7 @@ class HomographyTransformer(Node):
         homogeneous_uv = uv * scaling_factor
         u = homogeneous_uv[0, 0]
         v = homogeneous_uv[1, 0]
+        self.get_logger().info('u:' + str(u) + 'v:' + str(v))
         return u, v
     
     def draw_marker(self, cone_x, cone_y, message_frame):
@@ -165,6 +166,7 @@ class HomographyTransformer(Node):
 def main(args=None):
     rclpy.init(args=args)
     homography_transformer = HomographyTransformer()
+    homography_transformer.transormXyToUv(1.5, 0.0)
     rclpy.spin(homography_transformer)
     rclpy.shutdown()
 
