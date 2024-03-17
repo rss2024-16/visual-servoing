@@ -43,23 +43,6 @@ def cd_color_segmentation(img, template):
 	# template_hsv = cv2.cvtColor(template_image, cv2.COLOR_BGR2HSV)
 	# hue_values = template_hsv[:, :, 0]
 
-<<<<<<< HEAD
-	# setting thresholds manually
-
-	ORANGE_THRESHOLD = ([10, 150, 152], [50, 255, 255])
-	print(img.shape)
-
-	total_rows = img.shape[0]
-
-	# Calculate the start and end indices for the middle third of the rows
-	start_idx = total_rows // 3
-	end_idx = start_idx * 2
-
-	# Crop the image to the middle third of the rows
-	# The slicing includes all columns and all channels, hence the ':' in the second and third dimensions
-	cropped_img = img[240:360, :, :]
-	print(cropped_img.shape)
-=======
 	# # Calculate the minimum and maximum hue values in the template
 	# min_hue_value = np.min(hue_values)
 	# max_hue_value = np.max(hue_values)
@@ -68,7 +51,6 @@ def cd_color_segmentation(img, template):
 	# threshold = 3
 	# lower_bound = (max(min_hue_value - threshold, 0), 100, 100)
 	# upper_bound = (min(max_hue_value + threshold, 180), 255, 255)
->>>>>>> be519fc2d8cce6b29ff7e986a7027194365e7798
 
 	# Set thresholds manually
 	ORANGE_THRESHOLD = ([5, 200, 140], [35, 255, 255])
