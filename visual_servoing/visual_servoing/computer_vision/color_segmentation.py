@@ -33,40 +33,48 @@ def cd_color_segmentation(img, template):
 		img: np.3darray; the input image with a cone to be detected. BGR.
 		template_file_path; Not required, but can optionally be used to automate setting hue filter values.
 	Return:
-		bbox: ((x1, y1), (x2, y2)); the bounding box of the cone, unit in px
-				(x1, y1) is the top left of the bbox and (x2, y2) is the bottom right of the bbox
+		x, y: Top left of the bounding box
+		w, h: Width and height of the bounding box
 	"""
+	template = "test_images_cone/cone_template.png"
 	########## YOUR CODE STARTS HERE ##########
+	# # Use the template to set filter values
+	# template_image = cv2.imread(template)
+	# template_hsv = cv2.cvtColor(template_image, cv2.COLOR_BGR2HSV)
+	# hue_values = template_hsv[:, :, 0]
 
-	# setting thresholds manually
+	# # Calculate the minimum and maximum hue values in the template
+	# min_hue_value = np.min(hue_values)
+	# max_hue_value = np.max(hue_values)
 
-	ORANGE_THRESHOLD = ([10, 150, 152], [50, 255, 255])
+	# # Calculate lower and upper bounds
+	# threshold = 3
+	# lower_bound = (max(min_hue_value - threshold, 0), 100, 100)
+	# upper_bound = (min(max_hue_value + threshold, 180), 255, 255)
 
-	# convert bgr to hsv
-	hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+	# Set thresholds manually
+	ORANGE_THRESHOLD = ([5, 200, 140], [35, 255, 255])
 
-	# set lower and upper bounds for cone
+	# Set lower and upper bounds for cone
 	lower_bound = np.array(ORANGE_THRESHOLD[0])
 	upper_bound = np.array(ORANGE_THRESHOLD[1])
 
-	# using template to set filter values
+	# Blur the shit out of it
+	#img = cv2.GaussianBlur(img, (5,5), 0)
+	#img = cv2.medianBlur(img, 5)
+	img = cv2.blur(img, (4,4))
+	img = cv2.bilateralFilter(img, 5, 75, 75)
 
-	# template_image = cv2.imread(template)
-	# template_hsv = cv2.cvtColor(template_image, cv2.COLOR_BGR2HSV)
+	# Convert bgr to hsv
+	hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
-	# hue_values = template_hsv[:, :, 0]
-
-	# average_hue_value = np.mean(hue_values)
-
-	# lower_bound = average_hue_value - 10
-	# upper_bound = average_hue_value + 10
-
+	# Mask out our colors
 	mask = cv2.inRange(hsv, lower_bound, upper_bound)
-	# print(f"Mask: {mask}")
+	#image_print(mask)
+	#image_print(img)
 
-	# find contours from masks
+	# Find contours from masks
 	contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-	# print(f"Contours: {contours}")
 
 	 # If we have contours
 	if len(contours) != 0:
@@ -77,10 +85,11 @@ def cd_color_segmentation(img, template):
 		# Get a bounding rectangle around that contour
 		x, y, w, h = cv2.boundingRect(c)
 
-		cv2.rectangle(img,(x,y),(x+w,y+h),(0,0,255),2)
-		cv2.circle(img, (int(x+w/2), y+h), radius=0, color=(0, 0, 255), thickness=-1)
-		bounding_box = ((x,y),(x+w,y+h))
-		bottom_left = (x,y+h)
+		# Add rectangle and destination point
+		cv2.rectangle(img, (x,y), (x+w,y+h), (0,0,255), 2)
+		cv2.circle(img, (int(x+w/2), y+h), radius=1, color=(0, 0, 255), thickness=-1)
 
-		return bounding_box[0],bounding_box[1],bottom_left
-	return None,None,None
+		#return ((x,y), (x+w,y+h)) # Use for testing with the cv_test.py
+		return x, y, w, h # Actual return
+	
+	return None, None, None, None

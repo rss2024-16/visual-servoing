@@ -167,7 +167,14 @@ if __name__ == '__main__':
             print("Argument/s not recognized")
 
         if scores:
+            vals = []
             for (img, val) in scores.items():
-                print((img, val))
+                if val <= 0.6:
+                    print((img, val))
+                vals.append(val)
+
+            vals = np.array(vals)
+            print("Total: " + str(np.sum(vals)))
+            print("Mean: " + str(np.mean(vals)))
     else:
         print("too many arguments")

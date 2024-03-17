@@ -114,6 +114,25 @@ class HomographyTransformer(Node):
         y = homogeneous_xy[1, 0]
         return x, y
 
+    def transormXyToUv(self, x, y):
+        """
+        x and y are in meters.
+        The top left pixel is the origin, u axis increases to right, and v axis
+        increases down.
+
+        Returns a normal non-np 1x2 matrix of uv pixel coordinates of the point
+        on the image plane.
+        Camera points along positive x axis and y axis increases to the left of
+        the camera.
+        """
+        homogeneous_point = np.array([[x], [y], [1]])
+        uv = np.dot(np.linalg.inv(self.h), homogeneous_point)
+        scaling_factor = 1.0 / uv[2, 0]
+        homogeneous_uv = uv * scaling_factor
+        u = homogeneous_uv[0, 0]
+        v = homogeneous_uv[1, 0]
+        return u, v
+    
     def draw_marker(self, cone_x, cone_y, message_frame):
         """
         Publish a marker to represent the cone in rviz.
