@@ -45,21 +45,21 @@ class ConeDetector(Node):
         # YOUR CODE HERE
         # detect the cone and publish its
         # pixel location in the image.
-        upper_left, bottom_right = cd_color_segmentation(image_msg)
-        x, y = bottom_right
-        center_pixel = ConeLocationPixel()
-        center_pixel.u = x/2
-        center_pixel.v = y
-
-        self.cone_pub(center_pixel)
-
-        # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-        #################################
-
+        # self.get_logger().info(str(type(image_msg)))
         image = self.bridge.imgmsg_to_cv2(image_msg, "bgr8")
 
-        debug_msg = self.bridge.cv2_to_imgmsg(image, "bgr8")
-        self.debug_pub.publish(debug_msg)
+        upper_left, bottom_right, bottom_left = cd_color_segmentation(image,None)
+
+        if upper_left is not None:
+            x, y = bottom_right
+            center_pixel = ConeLocationPixel()
+            center_pixel.u = float((bottom_left[0]+bottom_right[0])/2)
+            center_pixel.v = float(y)
+
+            self.cone_pub.publish(center_pixel)
+
+            debug_msg = self.bridge.cv2_to_imgmsg(image, "bgr8")
+            self.debug_pub.publish(debug_msg)
 
 def main(args=None):
     rclpy.init(args=args)
