@@ -42,7 +42,6 @@ def cd_color_segmentation(img, template):
 
 	ORANGE_THRESHOLD = ([10, 150, 152], [50, 255, 255])
 
-
 	# convert bgr to hsv
 	hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 

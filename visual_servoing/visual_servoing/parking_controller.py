@@ -21,7 +21,7 @@ class ParkingController(Node):
         self.declare_parameter("drive_topic")
         DRIVE_TOPIC = self.get_parameter("drive_topic").value # set in launch file; different for simulator vs racecar
 
-        self.parking_distance = .5 # meters; try playing with this number!
+        self.parking_distance = .2 # meters; try playing with this number!
 
         self.drive_pub = self.create_publisher(AckermannDriveStamped, DRIVE_TOPIC, 10)
         self.error_pub = self.create_publisher(ParkingError, "/parking_error", 10)
@@ -109,7 +109,7 @@ class ParkingController(Node):
                     
                     if self.dist < 1.5*self.parking_distance:
                         #if we have not backed up far enough, continue
-                        speed = float(-1)
+                        speed = float(-2)
                         turning_angle = -turning_angle
 
                     else:
@@ -128,7 +128,8 @@ class ParkingController(Node):
 
 
             else:
-                speed = kp*abs(self.dist-self.parking_distance)
+                # speed = kp*abs(self.dist-self.parking_distance)
+                speed = 2.0
 
                 if self.relative_x < 0:
                     #if the cone is behind us, go backward instead of forward
@@ -137,10 +138,13 @@ class ParkingController(Node):
                     speed = -speed
                     turning_angle = -math.atan2(self.relative_y,self.relative_x)
 
-                if abs(speed) < 1.5:
+                
+                speed_threshold = 2.0
+
+                if abs(speed) < speed_threshold:
                     #this statement may need tuning on actual robot depending on the
                     #motor issues that we faced
-                    speed = float(1.5) if speed > 0 else float(-1.5)
+                    speed = float(speed_threshold) if speed > 0 else float(-speed_threshold)
                     
         if abs(turning_angle) > self.MAX_TURN:
             turning_angle = self.MAX_TURN if turning_angle > 0 else -self.MAX_TURN

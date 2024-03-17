@@ -48,6 +48,16 @@ class ConeDetector(Node):
         # self.get_logger().info(str(type(image_msg)))
         image = self.bridge.imgmsg_to_cv2(image_msg, "bgr8")
 
+        # self.get_logger().info(str(image.shape))
+        # width = img.shape[0]
+        # height = img.shape[1]
+        # crop_height = int(height - height//3)
+        # image_cropped = image[120:240,:,:]
+        # self.get_logger().info(str(image_cropped.shape))
+        image_copy = image[:,:,:]
+        image_copy[0:120,:,:] = 0
+        image_copy[240:,:,:] = 0
+
         upper_left, bottom_right, bottom_left = cd_color_segmentation(image,None)
 
         if upper_left is not None:
