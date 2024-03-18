@@ -88,13 +88,14 @@ class ParkingController(Node):
         kp = 1/3 #Kp value for speed
 
         self.dist = ( self.relative_x**2 + self.relative_y**2 ) ** (1/2)
-        look_ahead = self.dist
+        # look_ahead = self.dist
+        look_ahead = self.dist/2
         # if look_ahead < 1.0:
         #     look_ahead = self.dist
 
         angle = np.arctan2(self.relative_y,self.relative_x)
 
-        dist_eps = 0.1
+        dist_eps = 0.15
         angle_eps = 0.1
 
         if abs(self.dist - self.parking_distance) < dist_eps and abs(angle-angle_des) < angle_eps:
@@ -105,6 +106,7 @@ class ParkingController(Node):
             slope = self.relative_y/self.relative_x
             intersect = self.circle_intersection(slope, 0, look_ahead)
             turning_angle = math.atan2(2 * self.BASE_LENGTH * intersect[1], look_ahead**2)
+            # turning_angle = math.atan2(intersect[1],intersect[0])
 
             if self.parking_distance>self.dist or self.distance_check:
                 #if P>0, we are too close to the cone and may need to back up

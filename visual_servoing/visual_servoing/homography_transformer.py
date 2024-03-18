@@ -7,7 +7,7 @@ import numpy as np
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
 
-from std_msgs.msg import String
+from std_msgs.msg import String, Float32
 from sensor_msgs.msg import Image
 from ackermann_msgs.msg import AckermannDriveStamped
 from visualization_msgs.msg import Marker
@@ -59,8 +59,11 @@ class HomographyTransformer(Node):
 
         self.pixel_sub = self.create_subscription(Point, "/zed/zed_node/rgb/image_rect_color_mouse_left", self.image_callback, 10)
 
+        self.look_ahead_sub = self.create_subscription(Float32,'/look_ahead',self.lookAheadCallback,10)
+        
         if not len(PTS_GROUND_PLANE) == len(PTS_IMAGE_PLANE):
             rclpy.logerr("ERROR: PTS_GROUND_PLANE and PTS_IMAGE_PLANE should be of same length")
+        self.declare_parameter('look_ahead_v')
 
         #Initialize data into a homography matrix
 
@@ -131,9 +134,30 @@ class HomographyTransformer(Node):
         homogeneous_uv = uv * scaling_factor
         u = homogeneous_uv[0, 0]
         v = homogeneous_uv[1, 0]
-        self.get_logger().info('u:' + str(u) + 'v:' + str(v))
+        # self.get_logger().info('u:' + str(u) + 'v:' + str(v))
         return u, v
     
+    def lookAheadCallback(self,look_ahead):
+        """
+        x and y are in meters.
+        The top left pixel is the origin, u axis increases to right, and v axis
+        increases down.
+
+        Returns a normal non-np 1x2 matrix of uv pixel coordinates of the point
+        on the image plane.
+        Camera points along positive x axis and y axis increases to the left of
+        the camera.
+        """
+        x,y=0.0,look_ahead.data
+        homogeneous_point = np.array([[x], [y], [1]])
+        uv = np.dot(np.linalg.inv(self.h), homogeneous_point)
+        scaling_factor = 1.0 / uv[2, 0]
+        homogeneous_uv = uv * scaling_factor
+        u = homogeneous_uv[0, 0]
+        v = homogeneous_uv[1, 0]
+        self.get_logger().info('u:' + str(u) + 'v:' + str(v))
+        return u, v
+
     def draw_marker(self, cone_x, cone_y, message_frame):
         """
         Publish a marker to represent the cone in rviz.
