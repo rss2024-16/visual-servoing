@@ -50,7 +50,7 @@ class ConeDetector(Node):
         #194 = 1m
         #168.7 = 1.5m
         #209 = .5m
-        meter_dist = (168.7+209)/2
+        meter_dist = (168.7+209)/2 #0.75 meter lookhead in pixel
         lower = int(.9*meter_dist)
         upper = int(1.1*meter_dist)
         if upper > height:
@@ -63,6 +63,7 @@ class ConeDetector(Node):
         x, y, w, h, img = cd_color_segmentation(image_copy,None)
 
         if x is not None:
+            #send the bottom center pixel
             center_pixel = ConeLocationPixel()
             center_pixel.u = float(x + w/2)
             center_pixel.v = float(y + h)

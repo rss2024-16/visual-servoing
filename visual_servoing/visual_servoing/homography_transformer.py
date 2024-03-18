@@ -48,7 +48,6 @@ PTS_GROUND_PLANE = [[27, 2.5],
 
 METERS_PER_INCH = 0.0254
 
-
 class HomographyTransformer(Node):
     def __init__(self):
         super().__init__("homography_transformer")
@@ -112,6 +111,7 @@ class HomographyTransformer(Node):
         homogeneous_xy = xy * scaling_factor
         x = homogeneous_xy[0, 0]
         y = homogeneous_xy[1, 0]
+        self.get_logger().info('x:' + str(x) + 'y:' + str(y))
         return x, y
 
     def transormXyToUv(self, x, y):
@@ -125,6 +125,7 @@ class HomographyTransformer(Node):
         Camera points along positive x axis and y axis increases to the left of
         the camera.
         """
+        self.get_logger().info(str(self.h))
         homogeneous_point = np.array([[x], [y], [1]])
         uv = np.dot(np.linalg.inv(self.h), homogeneous_point)
         scaling_factor = 1.0 / uv[2, 0]
@@ -167,6 +168,11 @@ def main(args=None):
     rclpy.init(args=args)
     homography_transformer = HomographyTransformer()
     homography_transformer.transormXyToUv(1.5, 0.0)
+    homography_transformer.transformUvToXy(355, 202)
+    homography_transformer.transformUvToXy(223, 212)
+    homography_transformer.transformUvToXy(418, 206)
+    homography_transformer.transformUvToXy(256, 177)
+    homography_transformer.transformUvToXy(466, 262)
     rclpy.spin(homography_transformer)
     rclpy.shutdown()
 
