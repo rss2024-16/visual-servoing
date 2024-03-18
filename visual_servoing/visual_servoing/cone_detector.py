@@ -11,6 +11,8 @@ from sensor_msgs.msg import Image
 from geometry_msgs.msg import Point #geometry_msgs not in CMake file
 from vs_msgs.msg import ConeLocationPixel
 
+from std_msgs.msg import Float32
+
 # import your color segmentation algorithm; call this function in ros_image_callback!
 from computer_vision.color_segmentation import cd_color_segmentation
 
@@ -30,6 +32,8 @@ class ConeDetector(Node):
         self.cone_pub = self.create_publisher(ConeLocationPixel, "/relative_cone_px", 10)
         self.debug_pub = self.create_publisher(Image, "/cone_debug_img", 10)
         self.image_sub = self.create_subscription(Image, "/zed/zed_node/rgb/image_rect_color", self.image_callback, 5)
+
+        self.dist_pub = self.create_publisher(Float32,'/look_ahead',10)
         self.bridge = CvBridge() # Converts between ROS images and OpenCV Images
 
         self.get_logger().info("Cone Detector Initialized")
@@ -47,12 +51,16 @@ class ConeDetector(Node):
 
         #344,178.5
         height = image.shape[1]
-        #194 = 1m
-        #168.7 = 1.5m
-        #209 = .5m
-        meter_dist = (168.7+209)/2 #0.75 meter lookhead in pixel
-        lower = int(.9*meter_dist)
-        upper = int(1.1*meter_dist)
+
+        look_ahead = 2.5
+        self.dist_pub.publish(float(look_ahead))
+        v = self.get_parameter('look_ahead_v').value
+        
+        if v == 0:
+            v = 168.7
+
+        lower = int(.9*v)
+        upper = int(1.1*v)
         if upper > height:
             upper = height
         # image_cropped = image[lower:upper,:,:]
@@ -66,7 +74,7 @@ class ConeDetector(Node):
             #send the bottom center pixel
             center_pixel = ConeLocationPixel()
             center_pixel.u = float(x + w/2)
-            center_pixel.v = float(y + h)
+            center_pixel.v = float(y + h/2)
 
             self.cone_pub.publish(center_pixel)
 
