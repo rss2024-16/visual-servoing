@@ -45,7 +45,22 @@ class ConeDetector(Node):
         # YOUR CODE HERE
         image = self.bridge.imgmsg_to_cv2(image_msg, "bgr8")
 
-        x, y, w, h = cd_color_segmentation(image, None)
+        #344,178.5
+        height = image.shape[1]
+        #194 = 1m
+        #168.7 = 1.5m
+        #209 = .5m
+        meter_dist = (168.7+209)/2
+        lower = int(.9*meter_dist)
+        upper = int(1.1*meter_dist)
+        if upper > height:
+            upper = height
+        # image_cropped = image[lower:upper,:,:]
+        image_copy = np.copy(image)
+        image_copy[0:lower,:,:] = 0
+        image_copy[upper:,:,:] = 0
+
+        x, y, w, h, img = cd_color_segmentation(image_copy,None)
 
         if x is not None:
             center_pixel = ConeLocationPixel()
@@ -54,7 +69,7 @@ class ConeDetector(Node):
 
             self.cone_pub.publish(center_pixel)
 
-            debug_msg = self.bridge.cv2_to_imgmsg(image, "bgr8")
+            debug_msg = self.bridge.cv2_to_imgmsg(img, "bgr8")
             self.debug_pub.publish(debug_msg)
 
 def main(args=None):

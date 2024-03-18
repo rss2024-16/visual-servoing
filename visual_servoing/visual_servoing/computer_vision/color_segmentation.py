@@ -53,7 +53,8 @@ def cd_color_segmentation(img, template):
 	# upper_bound = (min(max_hue_value + threshold, 180), 255, 255)
 
 	# Set thresholds manually
-	ORANGE_THRESHOLD = ([5, 200, 140], [35, 255, 255])
+	# ORANGE_THRESHOLD = ([5, 200, 140], [35, 255, 255])
+	ORANGE_THRESHOLD = ([2, 80, 140], [30, 255, 255])
 
 	# Set lower and upper bounds for cone
 	lower_bound = np.array(ORANGE_THRESHOLD[0])
@@ -90,6 +91,6 @@ def cd_color_segmentation(img, template):
 		cv2.circle(img, (int(x+w/2), y+h), radius=1, color=(0, 0, 255), thickness=-1)
 
 		#return ((x,y), (x+w,y+h)) # Use for testing with the cv_test.py
-		return x, y, w, h # Actual return
+		return x, y, w, h, img # Actual return
 	
-	return None, None, None, None
+	return None, None, None, None, None

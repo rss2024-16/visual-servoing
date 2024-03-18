@@ -9,6 +9,8 @@ from ackermann_msgs.msg import AckermannDriveStamped
 
 import math
 
+import time
+
 class ParkingController(Node):
     """
     A controller for parking in front of a cone.
@@ -21,7 +23,7 @@ class ParkingController(Node):
         self.declare_parameter("drive_topic")
         DRIVE_TOPIC = self.get_parameter("drive_topic").value # set in launch file; different for simulator vs racecar
 
-        self.parking_distance = .5 # meters; try playing with this number!
+        self.parking_distance = .35 # meters; try playing with this number!
 
         self.drive_pub = self.create_publisher(AckermannDriveStamped, DRIVE_TOPIC, 10)
         self.error_pub = self.create_publisher(ParkingError, "/parking_error", 10)
@@ -44,7 +46,7 @@ class ParkingController(Node):
         self.get_logger().info("Parking Controller Initialized")
 
     def error(self,actual,desired):
-        return (desired - actual)/actual
+        return (desired - actual)
     
     def circle_intersection(self, line_slope, line_intercept, circle_radius):
         # Coefficients of the quadratic equation
@@ -86,14 +88,14 @@ class ParkingController(Node):
         kp = 1/3 #Kp value for speed
 
         self.dist = ( self.relative_x**2 + self.relative_y**2 ) ** (1/2)
-        look_ahead = self.dist/2
-        if look_ahead < 1.0:
-            look_ahead = self.dist
+        look_ahead = self.dist
+        # if look_ahead < 1.0:
+        #     look_ahead = self.dist
 
         angle = np.arctan2(self.relative_y,self.relative_x)
 
         dist_eps = 0.1
-        angle_eps = 0.05
+        angle_eps = 0.1
 
         if abs(self.dist - self.parking_distance) < dist_eps and abs(angle-angle_des) < angle_eps:
             #goal check
@@ -110,7 +112,7 @@ class ParkingController(Node):
                 
                 if self.distance_check:
                     
-                    if self.dist < 1.5*self.parking_distance:
+                    if self.dist < self.parking_distance:
                         #if we have not backed up far enough, continue
                         speed = float(-1)
                         turning_angle = -turning_angle
@@ -132,6 +134,7 @@ class ParkingController(Node):
 
             else:
                 speed = kp*abs(self.dist-self.parking_distance)
+                # speed = 1.5
 
                 if self.relative_x < 0:
                     #if the cone is behind us, go backward instead of forward
@@ -140,16 +143,19 @@ class ParkingController(Node):
                     speed = -speed
                     turning_angle = -math.atan2(self.relative_y,self.relative_x)
 
-                if abs(speed) < 1.5:
+                
+                speed_threshold = 2.5
+
+                if abs(speed) < speed_threshold:
                     #this statement may need tuning on actual robot depending on the
                     #motor issues that we faced
-                    speed = float(1.5) if speed > 0 else float(-1.5)
+                    speed = float(speed_threshold) if speed > 0 else float(-speed_threshold)
                     
         if abs(turning_angle) > self.MAX_TURN:
             turning_angle = self.MAX_TURN if turning_angle > 0 else -self.MAX_TURN
 
         
-        self.get_logger().info(str(turning_angle))
+        # self.get_logger().info(str(turning_angle))
 
         drive_cmd.drive.speed = speed
         drive_cmd.drive.steering_angle = turning_angle
