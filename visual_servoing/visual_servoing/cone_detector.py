@@ -90,6 +90,7 @@ class ConeDetector(Node):
         x, y, w, h, img = cd_color_segmentation(image_copy,None)
 
         if x is not None:
+            #send the bottom center pixel
             center_pixel = ConeLocationPixel()
             center_pixel.u = float(x + w/2)
             center_pixel.v = float(y + h/2)
