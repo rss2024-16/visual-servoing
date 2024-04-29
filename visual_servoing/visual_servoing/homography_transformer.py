@@ -14,6 +14,8 @@ from visualization_msgs.msg import Marker
 from vs_msgs.msg import ConeLocation, ConeLocationPixel
 from geometry_msgs.msg import Point
 
+from rclpy.parameter import Parameter
+
 #The following collection of pixel locations and corresponding relative
 #ground plane locations are used to compute our homography matrix
 
@@ -59,11 +61,11 @@ class HomographyTransformer(Node):
 
         self.pixel_sub = self.create_subscription(Point, "/zed/zed_node/rgb/image_rect_color_mouse_left", self.image_callback, 10)
 
+        self.look_ahead_pub = self.create_publisher(Float32,'/look_ahead_v',10)
         self.look_ahead_sub = self.create_subscription(Float32,'/look_ahead',self.lookAheadCallback,10)
         
         if not len(PTS_GROUND_PLANE) == len(PTS_IMAGE_PLANE):
             rclpy.logerr("ERROR: PTS_GROUND_PLANE and PTS_IMAGE_PLANE should be of same length")
-        self.declare_parameter('look_ahead_v')
 
         #Initialize data into a homography matrix
 
@@ -134,8 +136,9 @@ class HomographyTransformer(Node):
         homogeneous_uv = uv * scaling_factor
         u = homogeneous_uv[0, 0]
         v = homogeneous_uv[1, 0]
-        # self.get_logger().info('u:' + str(u) + 'v:' + str(v))
-        return u, v
+        # param = Parameter('look_ahead_v',Parameter.Type.FLOAT,v)
+        # self.set_parameters([param])
+        return u,v
     
     def lookAheadCallback(self,look_ahead):
         """
@@ -148,15 +151,16 @@ class HomographyTransformer(Node):
         Camera points along positive x axis and y axis increases to the left of
         the camera.
         """
-        x,y=0.0,look_ahead.data
+        x,y=look_ahead.data,0.0
         homogeneous_point = np.array([[x], [y], [1]])
         uv = np.dot(np.linalg.inv(self.h), homogeneous_point)
         scaling_factor = 1.0 / uv[2, 0]
         homogeneous_uv = uv * scaling_factor
         u = homogeneous_uv[0, 0]
         v = homogeneous_uv[1, 0]
-        self.get_logger().info('u:' + str(u) + 'v:' + str(v))
-        return u, v
+        msg = Float32()
+        msg.data = v
+        self.look_ahead_pub.publish(msg)
 
     def draw_marker(self, cone_x, cone_y, message_frame):
         """

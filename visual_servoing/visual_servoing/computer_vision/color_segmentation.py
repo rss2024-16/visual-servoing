@@ -63,7 +63,7 @@ def cd_color_segmentation(img, template):
 	# Blur the shit out of it
 	#img = cv2.GaussianBlur(img, (5,5), 0)
 	#img = cv2.medianBlur(img, 5)
-	img = cv2.blur(img, (4,4))
+	# img = cv2.blur(img, (4,4))
 	img = cv2.bilateralFilter(img, 5, 75, 75)
 
 	# Convert bgr to hsv

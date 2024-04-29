@@ -6,6 +6,7 @@ import numpy as np
 
 from vs_msgs.msg import ConeLocation, ParkingError
 from ackermann_msgs.msg import AckermannDriveStamped
+from std_msgs.msg import Float32
 
 import math
 
@@ -23,13 +24,16 @@ class ParkingController(Node):
         self.declare_parameter("drive_topic")
         DRIVE_TOPIC = self.get_parameter("drive_topic").value # set in launch file; different for simulator vs racecar
 
-        self.parking_distance = .35 # meters; try playing with this number!
+        self.parking_distance = .1 # meters; try playing with this number!
 
         self.drive_pub = self.create_publisher(AckermannDriveStamped, DRIVE_TOPIC, 10)
         self.error_pub = self.create_publisher(ParkingError, "/parking_error", 10)
+        self.turn_angle_pub = self.create_publisher(Float32,'/turning_angle',10)
 
         self.create_subscription(ConeLocation, "/relative_cone", 
             self.relative_cone_callback, 1)
+
+        self.look_ahead_pub = self.create_publisher(Float32,'/updated_look_ahead',10)
         
         self.MAX_TURN = .34
 
@@ -88,10 +92,9 @@ class ParkingController(Node):
         kp = 1/3 #Kp value for speed
 
         self.dist = ( self.relative_x**2 + self.relative_y**2 ) ** (1/2)
-        # look_ahead = self.dist
         look_ahead = self.dist/2
-        # if look_ahead < 1.0:
-        #     look_ahead = self.dist
+        if look_ahead < 0.75:
+            look_ahead = 0.75
 
         angle = np.arctan2(self.relative_y,self.relative_x)
 
@@ -146,7 +149,7 @@ class ParkingController(Node):
                     turning_angle = -math.atan2(self.relative_y,self.relative_x)
 
                 
-                speed_threshold = 2.5
+                speed_threshold = 1.6
 
                 if abs(speed) < speed_threshold:
                     #this statement may need tuning on actual robot depending on the
@@ -156,11 +159,20 @@ class ParkingController(Node):
         if abs(turning_angle) > self.MAX_TURN:
             turning_angle = self.MAX_TURN if turning_angle > 0 else -self.MAX_TURN
 
+        turn_msg = Float32()
+        turn_msg.data = turning_angle
+        self.turn_angle_pub.publish(turn_msg)
+
         
-        # self.get_logger().info(str(turning_angle))
+        self.get_logger().info('turning angle '+str(turning_angle))
 
         drive_cmd.drive.speed = speed
         drive_cmd.drive.steering_angle = turning_angle
+
+        camera_lookahead = 1.0*(1-5/3 * abs(turning_angle))
+        la_msg = Float32()
+        la_msg.data = camera_lookahead
+        self.look_ahead_pub.publish(la_msg)
 
         self.drive_pub.publish(drive_cmd)
         self.error_publisher()
