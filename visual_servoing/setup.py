@@ -14,7 +14,8 @@ setup(
         ('share/' + package_name, ['package.xml']),
         ('lib/'+package_name+"/computer_vision", glob.glob(os.path.join('visual_servoing/computer_vision', '*.py'))),
         ('share/visual_servoing/launch', glob.glob(os.path.join('launch', '*launch.xml'))),
-        ('share/visual_servoing/launch', glob.glob(os.path.join('launch', '*launch.py')))
+        ('share/visual_servoing/launch', glob.glob(os.path.join('launch', '*launch.py'))),
+        # ('share/visual_servoing/visual_interface/srv', glob.glob(os.path.join('srv', '*.srv')))
     ],  
     install_requires=['setuptools'],
     zip_safe=True,
@@ -29,7 +30,7 @@ setup(
             'cone_detector = visual_servoing.cone_detector:main',
             'cone_sim_marker = visual_servoing.cone_sim_marker:main',
             'homography_transformer = visual_servoing.homography_transformer:main',
-            'safety_controller = wall_follower.safety_controller:main'
+            'safety_controller = wall_follower.safety_controller:main',
         ],
     },
 )

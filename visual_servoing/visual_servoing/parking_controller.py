@@ -92,9 +92,10 @@ class ParkingController(Node):
         kp = 1/3 #Kp value for speed
 
         self.dist = ( self.relative_x**2 + self.relative_y**2 ) ** (1/2)
-        look_ahead = self.dist/2
-        if look_ahead < 0.75:
-            look_ahead = 0.75
+        # look_ahead = self.dist/2
+        # if look_ahead < 0.75:
+        #     look_ahead = 0.75
+        look_ahead = 1.5
 
         angle = np.arctan2(self.relative_y,self.relative_x)
 
@@ -111,44 +112,43 @@ class ParkingController(Node):
             turning_angle = math.atan2(2 * self.BASE_LENGTH * intersect[1], look_ahead**2)
             # turning_angle = math.atan2(intersect[1],intersect[0])
 
-            if self.parking_distance>self.dist or self.distance_check:
-                #if P>0, we are too close to the cone and may need to back up
-                #if self.distance_check is true, we are already backing up and need to check distance
+            # if self.parking_distance>self.dist or self.distance_check:
+            #     #if P>0, we are too close to the cone and may need to back up
+            #     #if self.distance_check is true, we are already backing up and need to check distance
                 
-                if self.distance_check:
+            #     if self.distance_check:
                     
-                    if self.dist < self.parking_distance:
-                        #if we have not backed up far enough, continue
-                        speed = float(-1)
-                        turning_angle = -turning_angle
+            #         if self.dist < self.parking_distance:
+            #             #if we have not backed up far enough, continue
+            #             speed = float(-1)
+            #             turning_angle = -turning_angle
 
-                    else:
-                        #if we have backed up far enough, set distance check to false
-                        #and resume regular control
-                        self.distance_check = False
-                        speed = 0.0
-                        turning_angle = 0.0
+                    # else:
+                    #     #if we have backed up far enough, set distance check to false
+                    #     #and resume regular control
+                    #     self.distance_check = False
+                    #     speed = 0.0
+                    #     turning_angle = 0.0
                 
-                else:
-                    #if we are too close but have not started backing up
-                    #set distance check to true to enable the backup sequence
-                    self.distance_check = True
-                    speed = 0.0
-                    turning_angle = 0.0
+                # else:
+                #     #if we are too close but have not started backing up
+                #     #set distance check to true to enable the backup sequence
+                #     self.distance_check = True
+                #     speed = 0.0
+                #     turning_angle = 0.0
 
 
-            else:
-                speed = kp*abs(self.dist-self.parking_distance)
-                # speed = 1.5
+            # speed = kp*abs(self.dist-self.parking_distance)
+            speed = 1.6
 
-                if self.relative_x < 0:
-                    #if the cone is behind us, go backward instead of forward
-                    #we also don't want to use pure pursuit as we will just drive
-                    #backward into cone, so just back up and correct angle
-                    speed = -speed
-                    turning_angle = -math.atan2(self.relative_y,self.relative_x)
+            if self.relative_x < 0:
+                #if the cone is behind us, go backward instead of forward
+                #we also don't want to use pure pursuit as we will just drive
+                #backward into cone, so just back up and correct angle
+                speed = -speed
+                turning_angle = -math.atan2(self.relative_y,self.relative_x)
 
-                
+            
                 speed_threshold = 1.6
 
                 if abs(speed) < speed_threshold:
@@ -175,7 +175,7 @@ class ParkingController(Node):
         self.look_ahead_pub.publish(la_msg)
 
         self.drive_pub.publish(drive_cmd)
-        self.error_publisher()
+        # self.error_publisher()
 
     def error_publisher(self):
         """

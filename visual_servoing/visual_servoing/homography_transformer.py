@@ -16,6 +16,8 @@ from geometry_msgs.msg import Point
 
 from rclpy.parameter import Parameter
 
+from visual_interface.srv import UvToXy
+
 #The following collection of pixel locations and corresponding relative
 #ground plane locations are used to compute our homography matrix
 
@@ -59,10 +61,12 @@ class HomographyTransformer(Node):
         self.cone_px_sub = self.create_subscription(ConeLocationPixel, "/relative_cone_px", self.cone_detection_callback, 1)
 
         self.pixel_sub = self.create_subscription(ConeLocationPixel, "/zed/zed_node/rgb/image_rect_color_mouse_left", self.image_callback, 10)
+        
+        self.pixel_service = self.create_service(UvToXy,'uv_to_xy',self.uv_to_xy_service)
 
         self.look_ahead_pub = self.create_publisher(Float32,'/look_ahead_v',10)
         self.look_ahead_sub = self.create_subscription(Float32,'/look_ahead',self.lookAheadCallback,10)
-        self.midpoint_sub = self.create_subscription(Point,'/line_detector/midpoint',self.cone_detection_callback)
+        self.midpoint_sub = self.create_subscription(ConeLocationPixel,'/line_detector/midpoint',self.cone_detection_callback,10)
         
         if not len(PTS_GROUND_PLANE) == len(PTS_IMAGE_PLANE):
             rclpy.logerr("ERROR: PTS_GROUND_PLANE and PTS_IMAGE_PLANE should be of same length")
@@ -81,6 +85,17 @@ class HomographyTransformer(Node):
 
         self.get_logger().info("Homography Transformer Initialized")
 
+    def uv_to_xy_service(self,request,response):
+        u = request.u
+        v = request.v
+
+        x, y = self.transformUvToXy(u, v)
+
+        response.x = x
+        response.y = y
+        
+        return response
+        
     def cone_detection_callback(self, msg):
         #Extract information from message
         u = msg.u
@@ -117,7 +132,7 @@ class HomographyTransformer(Node):
         homogeneous_xy = xy * scaling_factor
         x = homogeneous_xy[0, 0]
         y = homogeneous_xy[1, 0]
-        self.get_logger().info('x:' + str(x) + 'y:' + str(y))
+        # self.get_logger().info('x:' + str(x) + 'y:' + str(y))
         return x, y
 
     def transormXyToUv(self, x, y):
@@ -131,7 +146,7 @@ class HomographyTransformer(Node):
         Camera points along positive x axis and y axis increases to the left of
         the camera.
         """
-        self.get_logger().info(str(self.h))
+        # self.get_logger().info(str(self.h))
         homogeneous_point = np.array([[x], [y], [1]])
         uv = np.dot(np.linalg.inv(self.h), homogeneous_point)
         scaling_factor = 1.0 / uv[2, 0]
@@ -196,12 +211,12 @@ class HomographyTransformer(Node):
 def main(args=None):
     rclpy.init(args=args)
     homography_transformer = HomographyTransformer()
-    homography_transformer.transormXyToUv(1.5, 0.0)
-    homography_transformer.transformUvToXy(355, 202)
-    homography_transformer.transformUvToXy(223, 212)
-    homography_transformer.transformUvToXy(418, 206)
-    homography_transformer.transformUvToXy(256, 177)
-    homography_transformer.transformUvToXy(466, 262)
+    # homography_transformer.transormXyToUv(1.5, 0.0)
+    # homography_transformer.transformUvToXy(355, 202)
+    # homography_transformer.transformUvToXy(223, 212)
+    # homography_transformer.transformUvToXy(418, 206)
+    # homography_transformer.transformUvToXy(256, 177)
+    # homography_transformer.transformUvToXy(466, 262)
     rclpy.spin(homography_transformer)
     rclpy.shutdown()
 
