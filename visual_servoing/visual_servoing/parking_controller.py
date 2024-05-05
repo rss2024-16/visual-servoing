@@ -35,7 +35,7 @@ class ParkingController(Node):
 
         self.look_ahead_pub = self.create_publisher(Float32,'/updated_look_ahead',10)
         
-        self.MAX_TURN = .34
+        self.MAX_TURN = .2
 
         self.relative_x = 0
         self.relative_y = 0
@@ -47,7 +47,7 @@ class ParkingController(Node):
 
         self.distance_check = False
 
-        self.get_logger().info("Parking Controller Initialized")
+        # self.get_logger().info("Parking Controller Initialized")
 
     def error(self,actual,desired):
         return (desired - actual)
@@ -83,8 +83,8 @@ class ParkingController(Node):
         self.relative_x = msg.x_pos
         self.relative_y = msg.y_pos
 
-        pubstr = f"Relative x: {self.relative_x}\nRelative y: {self.relative_y}\n---------------"
-        self.get_logger().info(pubstr)
+        # pubstr = f"Relative x: {self.relative_x}\nRelative y: {self.relative_y}\n---------------"
+        # self.get_logger().info(pubstr)
         drive_cmd = AckermannDriveStamped()
 
         angle_des = 0
@@ -92,10 +92,7 @@ class ParkingController(Node):
         kp = 1/3 #Kp value for speed
 
         self.dist = ( self.relative_x**2 + self.relative_y**2 ) ** (1/2)
-        # look_ahead = self.dist/2
-        # if look_ahead < 0.75:
-        #     look_ahead = 0.75
-        look_ahead = 1.5
+        look_ahead = 4.0
 
         angle = np.arctan2(self.relative_y,self.relative_x)
 
@@ -110,69 +107,18 @@ class ParkingController(Node):
             slope = self.relative_y/self.relative_x
             intersect = self.circle_intersection(slope, 0, look_ahead)
             turning_angle = math.atan2(2 * self.BASE_LENGTH * intersect[1], look_ahead**2)
-            # turning_angle = math.atan2(intersect[1],intersect[0])
 
-            # if self.parking_distance>self.dist or self.distance_check:
-            #     #if P>0, we are too close to the cone and may need to back up
-            #     #if self.distance_check is true, we are already backing up and need to check distance
-                
-            #     if self.distance_check:
-                    
-            #         if self.dist < self.parking_distance:
-            #             #if we have not backed up far enough, continue
-            #             speed = float(-1)
-            #             turning_angle = -turning_angle
+            turning_angle += -0.03
+            speed = 4.0
 
-                    # else:
-                    #     #if we have backed up far enough, set distance check to false
-                    #     #and resume regular control
-                    #     self.distance_check = False
-                    #     speed = 0.0
-                    #     turning_angle = 0.0
-                
-                # else:
-                #     #if we are too close but have not started backing up
-                #     #set distance check to true to enable the backup sequence
-                #     self.distance_check = True
-                #     speed = 0.0
-                #     turning_angle = 0.0
-
-
-            # speed = kp*abs(self.dist-self.parking_distance)
-            speed = 1.6
-
-            if self.relative_x < 0:
-                #if the cone is behind us, go backward instead of forward
-                #we also don't want to use pure pursuit as we will just drive
-                #backward into cone, so just back up and correct angle
-                speed = -speed
-                turning_angle = -math.atan2(self.relative_y,self.relative_x)
-
-            
-                speed_threshold = 1.6
-
-                if abs(speed) < speed_threshold:
-                    #this statement may need tuning on actual robot depending on the
-                    #motor issues that we faced
-                    speed = float(speed_threshold) if speed > 0 else float(-speed_threshold)
+        self.get_logger().info(f'{turning_angle}')
                     
         if abs(turning_angle) > self.MAX_TURN:
             turning_angle = self.MAX_TURN if turning_angle > 0 else -self.MAX_TURN
 
-        turn_msg = Float32()
-        turn_msg.data = turning_angle
-        self.turn_angle_pub.publish(turn_msg)
-
-        
-        self.get_logger().info('turning angle '+str(turning_angle))
 
         drive_cmd.drive.speed = speed
         drive_cmd.drive.steering_angle = turning_angle
-
-        camera_lookahead = 1.0*(1-5/3 * abs(turning_angle))
-        la_msg = Float32()
-        la_msg.data = camera_lookahead
-        self.look_ahead_pub.publish(la_msg)
 
         self.drive_pub.publish(drive_cmd)
         # self.error_publisher()
