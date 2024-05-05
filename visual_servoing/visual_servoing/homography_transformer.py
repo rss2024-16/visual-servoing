@@ -16,8 +16,6 @@ from geometry_msgs.msg import Point
 
 from rclpy.parameter import Parameter
 
-from visual_interface.srv import UvToXy
-
 #The following collection of pixel locations and corresponding relative
 #ground plane locations are used to compute our homography matrix
 
@@ -61,9 +59,7 @@ class HomographyTransformer(Node):
         self.cone_px_sub = self.create_subscription(ConeLocationPixel, "/relative_cone_px", self.cone_detection_callback, 1)
 
         self.pixel_sub = self.create_subscription(ConeLocationPixel, "/zed/zed_node/rgb/image_rect_color_mouse_left", self.image_callback, 10)
-        
-        self.pixel_service = self.create_service(UvToXy,'uv_to_xy',self.uv_to_xy_service)
-
+    
         self.look_ahead_pub = self.create_publisher(Float32,'/look_ahead_v',10)
         self.look_ahead_sub = self.create_subscription(Float32,'/look_ahead',self.lookAheadCallback,10)
         self.midpoint_sub = self.create_subscription(ConeLocationPixel,'/line_detector/midpoint',self.cone_detection_callback,10)
@@ -85,17 +81,6 @@ class HomographyTransformer(Node):
 
         self.get_logger().info("Homography Transformer Initialized")
 
-    def uv_to_xy_service(self,request,response):
-        u = request.u
-        v = request.v
-
-        x, y = self.transformUvToXy(u, v)
-
-        response.x = x
-        response.y = y
-        
-        return response
-        
     def cone_detection_callback(self, msg):
         #Extract information from message
         u = msg.u
